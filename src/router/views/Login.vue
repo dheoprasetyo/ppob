@@ -38,7 +38,51 @@
   </div>
 </template>
 
-<style scoped>
+<script>
+import axios from 'axios'
+export default {
+  name: 'Login',
+  data() {
+    return {
+        form: { email:'', password:'' },
+        loading: false,
+        errorMsg: '',
+        baseapi: localStorage.getItem("baseapi"),
+    }
+  },
+  methods: {
+
+    async submit () {
+    // console.log('test')
+      this.loading = true
+      this.errorMsg = ''
+      try {
+        const res = await axios.post(this.baseapi+'/login', {
+          email: this.form.email,
+          password: this.form.password
+        })
+        // assuming API returns { token, user }
+        localStorage.setItem('token', res.data.data.token)
+        this.$router.push('/')
+      } catch (err) {
+        this.errorMsg = err.response?.data?.message || 'Login gagal'
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // submit () {
+    //   if (!this.email || !this.password) return
+    //   localStorage.setItem('token', 'demo-token')
+    //   localStorage.setItem('user_name', this.email.split('@')[0] || 'Pengguna')
+    //   this.$router.push('/')
+    // },
+    // register () { this.login() }
+  }
+}
+</script>
+
+<style>
     :root{
       --bg:#f6f7fb;
       --card:#ffffff;
@@ -107,47 +151,3 @@
       .left{height:260px}
     }
   </style>
-
-<script>
-import axios from 'axios'
-export default {
-  name: 'Login',
-  data() {
-    return {
-        form: { email:'', password:'' },
-        loading: false,
-        errorMsg: '',
-        baseapi: localStorage.getItem("baseapi"),
-    }
-  },
-  methods: {
-
-    async submit () {
-    // console.log('test')
-      this.loading = true
-      this.errorMsg = ''
-      try {
-        const res = await axios.post(this.baseapi+'/login', {
-          email: this.form.email,
-          password: this.form.password
-        })
-        // assuming API returns { token, user }
-        localStorage.setItem('token', res.data.data.token)
-        this.$router.push('/')
-      } catch (err) {
-        this.errorMsg = err.response?.data?.message || 'Login gagal'
-      } finally {
-        this.loading = false
-      }
-    },
-
-    // submit () {
-    //   if (!this.email || !this.password) return
-    //   localStorage.setItem('token', 'demo-token')
-    //   localStorage.setItem('user_name', this.email.split('@')[0] || 'Pengguna')
-    //   this.$router.push('/')
-    // },
-    // register () { this.login() }
-  }
-}
-</script>

@@ -25,10 +25,10 @@
       <b-row class="mb-4">
         <b-col cols="6">
           <div class="d-flex align-items-center">
-            <b-avatar src="profile-image.jpg" size="60px" class="mr-3"></b-avatar>
+            <b-avatar :src="profile.profile_image" size="60px" class="mr-3"></b-avatar>
             <div>
               <p class="text-muted mb-1">Selamat datang,</p>
-              <h4 class="font-weight-bold">{{ userName }}</h4>
+              <h4 class="font-weight-bold">{{ profile.first_name }} {{ profile.last_name }}</h4>
             </div>
           </div>
         </b-col>
@@ -40,11 +40,13 @@
               <h3 class="font-weight-bold mr-2">
                 {{ showBalance ? formatCurrency(balance) : 'Rp • • • • • • •' }}
               </h3>
-              <b-button variant="link" class="text-white p-0" @click="toggleBalance">
-                <i :class="showBalance ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
-              </b-button>
+              
             </div>
-            <small class="opacity-75">Lihat Saldo</small>
+            <small class="opacity-75">Lihat Saldo
+                <b-button variant="link" class="text-white p-0" @click="toggleBalance">
+                    <i :class="showBalance ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+                </b-button>
+            </small>
           </b-card>
         </b-col>
       </b-row>
@@ -87,12 +89,16 @@
 </template>
 
 <script>
+import axios from 'axios'
 export default {
   name: 'MobileBankingDashboard',
   data() {
     return {
+      baseapi: localStorage.getItem("baseapi"),
+      token: localStorage.getItem("token"),
+      profile: [],
       userName: 'Kristanto Wibowo',
-      balance: '2500000',
+      balance: 0,
       showBalance: false,
       services: [
         { id: 1, name: 'PBB', icon: 'fa fa-home', colorClass: 'bg-success' },
@@ -133,10 +139,37 @@ export default {
     toggleBalance() {
       this.showBalance = !this.showBalance;
     },
-    formatCurrency(amount) {
-      return `Rp ${amount.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
+    formatCurrency(value) {
+      const formatted = new Intl.NumberFormat('id-ID').format(value);
+      return `Rp ${formatted}`;
     }
-  }
+  },
+  async created () {
+    const token = localStorage.getItem('token')
+
+    try {
+      // run 3 GET requests in parallel
+      const [profile, balance] = await Promise.all([
+        axios.get(this.baseapi+'/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(this.baseapi+'/balance', {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        // axios.get('http://localhost:3000/api/transactions', {
+        //   headers: { Authorization: `Bearer ${token}` }
+        // })
+      ])
+
+      // assign data
+      this.profile = profile.data.data
+      this.balance = balance.data.data.balance
+    //   console.log(this.balance.balance)
+    //   this.transactions = transRes.data
+    } catch (err) {
+      console.error('Error loading dashboard data', err)
+    }
+  },
 }
 </script>
 
