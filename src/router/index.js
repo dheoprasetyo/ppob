@@ -25,7 +25,13 @@ const routes = [
     name: 'login',
     component: () => import('./views/Login'),
     meta: { public: true }
-    },
+  },
+  {
+    path: '/register',
+    name: 'register',
+    component: () => import('./views/Register'),
+    meta: { public: true }
+  },
 ]
 
 const router = new VueRouter({
