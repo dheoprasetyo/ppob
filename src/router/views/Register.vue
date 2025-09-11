@@ -35,12 +35,11 @@
                 <!-- <button class="submit" type="submit">Masuk</button> -->
             </form>
 
-            <p v-if="succesMsg" class="text-success mt-2">{{ succesMsg }}</p>
-            <p v-if="errorMsg" class="text-danger mt-2">{{ errorMsg }}</p>
+            <p v-if="message" :class="jenis">{{ message }}</p>
 
             <div class="foot muted">
-            Not a member?
-            <span class="signup" >Sign Up</span>
+            Sudah punya akun ?
+            <span class="signup" @click="$router.push('/login')" >Login</span>
             </div>
         </div>
 
@@ -66,16 +65,16 @@ export default {
             last_name: ''
         },
         loading: false,
-        errorMsg: '',
-        succesMsg: '',
+        message: '',
+        jenis: '',
         baseapi: localStorage.getItem("baseapi"),
     }
   },
   methods: {
     async submit () {
       this.loading = true
-      this.errorMsg = ''
-      this.succesMsg = ''
+      this.message = ''
+      this.jenis = ''
       try {
         const res = await axios.post(this.baseapi+'/registration', {
           email: this.form.email,
@@ -83,9 +82,11 @@ export default {
           first_name: this.form.first_name,
           last_name: this.form.last_name
         })
-        this.succesMsg = res.data.message;
+        this.message = res.data.message;
+        this.jenis = 'text-success mt-2'
       } catch (err) {
-        this.errorMsg = err.response?.data?.message
+        this.message = err.response?.data?.message
+        this.jenis = 'text-danger mt-2'
       } finally {
         this.loading = false
       }

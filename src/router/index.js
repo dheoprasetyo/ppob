@@ -32,6 +32,12 @@ const routes = [
     component: () => import('./views/Register'),
     meta: { public: true }
   },
+  {
+    path: '/topup',
+    name: 'topUp',
+    // component: HomeView
+    component: () => import('./views/TopUp')
+  },
 ]
 
 const router = new VueRouter({

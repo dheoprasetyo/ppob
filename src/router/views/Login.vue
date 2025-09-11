@@ -26,8 +26,8 @@
             <p v-if="errorMsg" class="text-danger mt-2">{{ errorMsg }}</p>
 
             <div class="foot muted">
-            Not a member?
-            <span class="signup" >Sign Up</span>
+            Tidak ada akun?
+            <span class="signup"  @click="$router.push('/register')">Sign Up</span>
             </div>
         </div>
 
