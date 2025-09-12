@@ -54,40 +54,30 @@
       <!-- Services Grid -->
       <b-row class="mb-4">
         <div>
-            <h6>Silahkan masukan</h6>
-            <h2><strong>Nominal Top Up</strong></h2>
+            <h6>Pembayaran</h6>
+            <div class="d-flex align-items-center">
+                {{ name }}
+            </div>
 
             <!-- Input Field -->
             <div class="input-container">
                 <b-form-input
-                    v-model="nominal"
+                    v-model="tagihan"
                     placeholder="masukan nominal Top Up"
                     type="text"
                     class="form-control"
+                    readonly
                 ></b-form-input>
             </div>
 
-            <div class="amount-grid">
-                <div 
-                    v-for="amount in amounts" 
-                    :key="amount"
-                    class="amount-btn"
-                    :class="{ selected: selectedAmount === amount }"
-                    @click="selectAmount(amount)"
-                >
-                    {{ formatCurrency(amount) }}
-                </div>
-            </div>
-
             <button 
-                class="topup-btn"
-                :class="{ active: isFormValid }"
-                :disabled="!isFormValid || loading"
-                @click="topUp()"
+                class="topup-btn active"
+                :disabled="loading"
+                @click="transaction()"
             >
-                {{ loading ? 'Loading...' : 'Top Up' }}
+                {{ loading ? 'Loading...' : 'Bayar' }}
             </button>
-            <p v-if="message" class="text-success mt-2">{{ message }}</p>
+            <p v-if="message" class="text-success mt-2" style="cursor: pointer;" @click="$router.push('/')">{{ message }},kembali ke branda</p>
         </div>
       </b-row>
     </b-container>
@@ -97,7 +87,8 @@
 <script>
 import axios from 'axios'
 export default {
-  name: 'MobileBankingDashboard',
+  name: 'Pembayaran',
+  props:['id', 'name', 'tagihan'],
   data() {
     return {
       baseapi: localStorage.getItem("baseapi"),
@@ -105,7 +96,6 @@ export default {
       profile: [],
       balance: 0,
       showBalance: false,
-      nominal: 0,
       amounts: [10000, 20000, 50000, 100000, 250000, 500000],
       selectedAmount: null,
       loading: false,
@@ -121,16 +111,13 @@ export default {
       const formatted = new Intl.NumberFormat('id-ID').format(value);
       return `Rp ${formatted}`;
     },
-    selectAmount(value){
-        this.nominal = value
-    },
-    async topUp() {
+    async transaction() {
         console.log('test')
         this.loading = true
         this.errorMsg = ''
         try {
-            const res = await axios.post(this.baseapi+'/topup', {
-                top_up_amount: this.nominal,
+            const res = await axios.post(this.baseapi+'/transaction', {
+                service_code: this.id,
             },
             {
                 headers: {
@@ -139,38 +126,35 @@ export default {
             })
             this.message = res.data.message;
             this.balance = res.data.data.balance
-            this.nominal = 0
+            this.loadDashboardData()
         } catch (err) {
-            this.errorMsg = err.response?.data?.message || 'Top Up gagal'
+            this.message = err.response?.data?.message || 'Pemabayaran gagal'
         } finally {
             this.loading = false
         }
-    }
-  },
-  computed: {
-    isFormValid() {
-        return this.nominal && this.nominal > 0 && this.nominal < 1000000;
-    }
-  },
-  async created () {
-    const token = localStorage.getItem('token')
+    },
+    async loadDashboardData() {
+        try {
+            const [profile, balance] = await Promise.all([
+                axios.get(this.baseapi + '/profile', {
+                headers: { Authorization: `Bearer ${this.token}` }
+                }),
+                axios.get(this.baseapi + '/balance', {
+                headers: { Authorization: `Bearer ${this.token}` }
+                }),
+            ])
 
-    try {
-      const [profile, balance] = await Promise.all([
-        axios.get(this.baseapi+'/profile', {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get(this.baseapi+'/balance', {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-      ])
-
-      this.profile = profile.data.data
-      this.balance = balance.data.data.balance
-    } catch (err) {
-      console.error('Error loading dashboard data', err)
+            this.profile = profile.data.data
+            this.balance = balance.data.data.balance
+        } catch (err) {
+            console.error('Error loading dashboard data', err)
+        }
     }
   },
+  async created() {
+    await this.loadDashboardData()
+  }
+
 }
 </script>
 
@@ -194,26 +178,10 @@ export default {
     padding: 16px;
     font-size: 16px;
 }
-.amount-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 30px;
-}
-.amount-btn {
-    padding: 16px 12px;
-    border: 1px solid;
-    background: #ffffff;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    text-align: center;
-}
 .topup-btn {
     width: 100%;
     padding: 16px;
-    background-color: #9ca3af;
+    background-color: #DC3545;
     border: none;
     border-radius: 8px;
     color: white;
@@ -227,7 +195,7 @@ export default {
     cursor: not-allowed;
 }
 .topup-btn.active {
-    background-color: #3b82f6;
+    background-color: #DC3545;
 }
 
 </style>

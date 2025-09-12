@@ -54,40 +54,34 @@
       <!-- Services Grid -->
       <b-row class="mb-4">
         <div>
-            <h6>Silahkan masukan</h6>
-            <h2><strong>Nominal Top Up</strong></h2>
-
-            <!-- Input Field -->
-            <div class="input-container">
-                <b-form-input
-                    v-model="nominal"
-                    placeholder="masukan nominal Top Up"
-                    type="text"
-                    class="form-control"
-                ></b-form-input>
-            </div>
-
-            <div class="amount-grid">
-                <div 
-                    v-for="amount in amounts" 
-                    :key="amount"
-                    class="amount-btn"
-                    :class="{ selected: selectedAmount === amount }"
-                    @click="selectAmount(amount)"
+            <h6>Semua Transaksi</h6>
+            <b-list-group>
+                <b-list-group-item
+                    v-for="(transaction, index) in transactions"
+                    :key="index"
+                    class="d-flex justify-content-between align-items-center mb-3"
                 >
-                    {{ formatCurrency(amount) }}
-                </div>
-            </div>
+                    <div class>
+                    <div :class="transaction.transaction_type == 'TOPUP' ? 'text-success' : 'text-danger'">
+                        {{ transaction.transaction_type  == 'TOPUP' ? '+' : '–' }} {{ formatCurrency(transaction.total_amount) }}
+                    </div>
+                    <small class="text-muted">{{ transaction.created_on }}</small>
+                    </div>
+                    <div class="text-muted">{{ transaction.description }}</div>
+                </b-list-group-item>
+                </b-list-group>
 
-            <button 
-                class="topup-btn"
-                :class="{ active: isFormValid }"
-                :disabled="!isFormValid || loading"
-                @click="topUp()"
-            >
-                {{ loading ? 'Loading...' : 'Top Up' }}
-            </button>
-            <p v-if="message" class="text-success mt-2">{{ message }}</p>
+                <div class="text-center mt-3">
+                <b-button
+                    variant="link"
+                    class="text-danger"
+                    @click="loadMore"
+                    :disabled="loading || noData"
+                >
+                    {{ loading ? 'Loading...' : noData ? 'No More Data' : 'Show more'  }}
+                </b-button>
+                </div>
+            <p v-if="message" class="text-success mt-2" style="cursor: pointer;" @click="$router.push('/')">{{ message }},kembali ke branda</p>
         </div>
       </b-row>
     </b-container>
@@ -97,7 +91,7 @@
 <script>
 import axios from 'axios'
 export default {
-  name: 'MobileBankingDashboard',
+  name: 'Transaction',
   data() {
     return {
       baseapi: localStorage.getItem("baseapi"),
@@ -105,11 +99,12 @@ export default {
       profile: [],
       balance: 0,
       showBalance: false,
-      nominal: 0,
-      amounts: [10000, 20000, 50000, 100000, 250000, 500000],
-      selectedAmount: null,
       loading: false,
-      message: ''
+      message: '',
+      transactions: [],
+      offset: 0,
+      limit: 3,
+      noData: false
       
     }
   },
@@ -121,56 +116,56 @@ export default {
       const formatted = new Intl.NumberFormat('id-ID').format(value);
       return `Rp ${formatted}`;
     },
-    selectAmount(value){
-        this.nominal = value
-    },
-    async topUp() {
+    async getTransaction() {
         console.log('test')
         this.loading = true
         this.errorMsg = ''
         try {
-            const res = await axios.post(this.baseapi+'/topup', {
-                top_up_amount: this.nominal,
-            },
-            {
+            const res = await axios.get(this.baseapi+`/transaction/history?offset=${this.offset}&limit=${this.limit}`, {
                 headers: {
                     Authorization: `Bearer ${this.token}`
                 }
             })
-            this.message = res.data.message;
-            this.balance = res.data.data.balance
-            this.nominal = 0
+            const data = res.data.data.records
+            if (data.length < this.limit) {
+                this.noData = true;
+            }
+            this.transactions = this.transactions.concat(data);
+            this.offset += this.limit;
         } catch (err) {
-            this.errorMsg = err.response?.data?.message || 'Top Up gagal'
+            this.message = err.response?.data?.message || 'Error loading more data'
         } finally {
             this.loading = false
         }
-    }
-  },
-  computed: {
-    isFormValid() {
-        return this.nominal && this.nominal > 0 && this.nominal < 1000000;
-    }
-  },
-  async created () {
-    const token = localStorage.getItem('token')
+    },
+    async loadMore(){
+        if (!this.loading && !this.noData) {
+            await this.getTransaction()
+        }
+    },
+    async loadDashboardData() {
+        try {
+            const [profile, balance] = await Promise.all([
+                axios.get(this.baseapi + '/profile', {
+                headers: { Authorization: `Bearer ${this.token}` }
+                }),
+                axios.get(this.baseapi + '/balance', {
+                headers: { Authorization: `Bearer ${this.token}` }
+                }),
+            ])
 
-    try {
-      const [profile, balance] = await Promise.all([
-        axios.get(this.baseapi+'/profile', {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get(this.baseapi+'/balance', {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-      ])
-
-      this.profile = profile.data.data
-      this.balance = balance.data.data.balance
-    } catch (err) {
-      console.error('Error loading dashboard data', err)
+            this.profile = profile.data.data
+            this.balance = balance.data.data.balance
+        } catch (err) {
+            console.error('Error loading dashboard data', err)
+        }
     }
   },
+  async created() {
+    await this.loadDashboardData()
+    await this.getTransaction()
+  }
+
 }
 </script>
 
@@ -194,26 +189,10 @@ export default {
     padding: 16px;
     font-size: 16px;
 }
-.amount-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 30px;
-}
-.amount-btn {
-    padding: 16px 12px;
-    border: 1px solid;
-    background: #ffffff;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    text-align: center;
-}
 .topup-btn {
     width: 100%;
     padding: 16px;
-    background-color: #9ca3af;
+    background-color: #DC3545;
     border: none;
     border-radius: 8px;
     color: white;
@@ -227,7 +206,7 @@ export default {
     cursor: not-allowed;
 }
 .topup-btn.active {
-    background-color: #3b82f6;
+    background-color: #DC3545;
 }
 
 </style>

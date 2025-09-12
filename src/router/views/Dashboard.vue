@@ -13,8 +13,8 @@
         
         <b-navbar-nav class="ms-auto">
             <b-nav-item @click="$router.push('/topUp')">Top Up</b-nav-item>
-            <b-nav-item>Transaction</b-nav-item>
-            <b-nav-item>Akun</b-nav-item>
+            <b-nav-item @click="$router.push('/transaction')">Transaction</b-nav-item>
+            <b-nav-item @click="$router.push('/profile')">Akun</b-nav-item>
         </b-navbar-nav>
     </b-navbar>
 
@@ -55,13 +55,13 @@
       <b-row class="mb-4">
         <b-col 
           v-for="service in services" 
-          :key="service.id" 
+          :key="service.service_code" 
           cols="2" 
           class="text-center mb-3 mt-3"
         >
           <div class="service-item">
             <div :class="'service-icon ' + service.colorClass">
-              <b-img :src="service.service_icon" rounded alt="Rounded image"></b-img>
+              <b-img :src="service.service_icon" rounded alt="Rounded image" @click="$router.push({ name: 'pembayaran', params: { id: service.service_code, name: service.service_name, tagihan: service.service_tariff } })"></b-img>
               <!-- <b-avatar :src="service.service_icon" size="60px" class="mr-3"></b-avatar> -->
             </div>
             <small class="d-block mt-2">{{ service.service_name }}</small>
@@ -97,29 +97,10 @@ export default {
       baseapi: localStorage.getItem("baseapi"),
       token: localStorage.getItem("token"),
       profile: [],
-      userName: 'Kristanto Wibowo',
       balance: 0,
       showBalance: false,
       services: [],
-      banner: [
-        // {
-        //   id: 1,
-        //   title: 'Saldo Gratis!',
-        //   subtitle: 'Dapatkan saldo gratis',
-        //   description: 'Syarat dan ketentuan berlaku',
-        //   bgClass: 'bg-danger',
-        //   textVariant: 'white'
-        // },
-        // {
-        //   id: 2,
-        //   title: 'Cashback Belanja!',
-        //   subtitle: 'Belanja hemat dengan cashback',
-        //   description: 'hingga 25%',
-        //   bgClass: 'bg-pink',
-        //   textVariant: 'white'
-        // }
-        // ... more promo cards
-      ]
+      banner: []
     }
   },
   methods: {
@@ -183,6 +164,7 @@ export default {
   align-items: center;
   justify-content: center;
   margin: 0 auto;
+  cursor: pointer;
 }
 
 .promo-scroll {
