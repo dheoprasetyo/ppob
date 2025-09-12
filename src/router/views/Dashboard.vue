@@ -1,27 +1,6 @@
 <template>
-  <div class="mobile-banking-dashboard">
-    <!-- Header -->
-    <b-navbar variant="light" class="border-bottom">
-        <b-navbar-brand>
-            <div class="d-flex align-items-center">
-            <div class="logo-circle bg-danger rounded-circle d-flex align-items-center justify-content-center">
-                <span class="text-white font-weight-bold">S</span>
-            </div>
-            <span class="ms-2 font-weight-bold">SIMS PPOB</span>
-            </div>
-        </b-navbar-brand>
-        
-        <b-navbar-nav class="ms-auto">
-            <b-nav-item @click="$router.push('/topUp')">Top Up</b-nav-item>
-            <b-nav-item @click="$router.push('/transaction')">Transaction</b-nav-item>
-            <b-nav-item @click="$router.push('/profile')">Akun</b-nav-item>
-        </b-navbar-nav>
-    </b-navbar>
-
-
-    <!-- Main Content -->
+  <layout>
     <b-container fluid class="p-4">
-      <!-- Profile and Balance Section -->
       <b-row class="mb-4">
         <b-col cols="6">
           <div class="d-flex align-items-center">
@@ -51,7 +30,6 @@
         </b-col>
       </b-row>
 
-      <!-- Services Grid -->
       <b-row class="mb-4">
         <b-col 
           v-for="service in services" 
@@ -62,36 +40,42 @@
           <div class="service-item">
             <div :class="'service-icon ' + service.colorClass">
               <b-img :src="service.service_icon" rounded alt="Rounded image" @click="$router.push({ name: 'pembayaran', params: { id: service.service_code, name: service.service_name, tagihan: service.service_tariff } })"></b-img>
-              <!-- <b-avatar :src="service.service_icon" size="60px" class="mr-3"></b-avatar> -->
             </div>
             <small class="d-block mt-2">{{ service.service_name }}</small>
           </div>
         </b-col>
       </b-row>
 
-      <!-- Promo Section -->
       <div class="promo-section">
         <h5 class="mb-3">Temukan promo menarik</h5>
         <div class="d-flex promo-scroll">
-          <b-card 
+          <div 
             v-for="promo in banner" 
             :key="promo.id"
-            :class="'promo-card'"
-            :img-src="promo.banner_image"
-            img-alt="Image"
-            overlay
+            class="promo-card"
           >
-          </b-card>
+            <div class="promo-image-container">
+              <img 
+                :src="promo.banner_image" 
+                :alt="`Promo ${promo.id}`"
+                class="promo-image"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </b-container>
-  </div>
+  </layout>
 </template>
 
 <script>
 import axios from 'axios'
+import Layout from '../layout/Layout.vue';
 export default {
-  name: 'MobileBankingDashboard',
+  name: 'Dashboard',
+  components: {
+    Layout,
+  },
   data() {
     return {
       baseapi: localStorage.getItem("baseapi"),
@@ -110,7 +94,11 @@ export default {
     formatCurrency(value) {
       const formatted = new Intl.NumberFormat('id-ID').format(value);
       return `Rp ${formatted}`;
-    }
+    },
+    logOut(){
+      localStorage.removeItem('token')
+      this.$router.replace('/login')
+    },
   },
   async created () {
     const token = localStorage.getItem('token')
@@ -132,26 +120,24 @@ export default {
         }),
       ])
 
-      // assign data
       this.profile = profile.data.data
+      localStorage.setItem('profile', JSON.stringify(this.profile))
       this.balance = balance.data.data.balance
       this.services = services.data.data
       this.banner = banner.data.data
-    //   console.log(this.balance.balance)
-    //   this.transactions = transRes.data
+      
     } catch (err) {
       console.error('Error loading dashboard data', err)
+      this.message = err.response?.data?.message
+      if (err.response?.data?.message == 'Token tidak tidak valid atau kadaluwarsa') {
+        this.logOut()
+      }
     }
   },
 }
 </script>
 
 <style scoped>
-.logo-circle {
-  width: 32px;
-  height: 32px;
-}
-
 .balance-card {
   min-width: 280px;
 }
@@ -169,12 +155,49 @@ export default {
 
 .promo-scroll {
   overflow-x: auto;
+  gap: 15px;
   /* padding-bottom: 10px; */
 }
 
 .promo-card {
   min-width: 280px;
+  height: 160px; /* Fixed height for consistency */
   flex-shrink: 0;
-  margin-right: 30px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.promo-image-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.promo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* This ensures the image covers the entire container */
+  object-position: center; /* Centers the image */
+  display: block;
+  border-radius: 8px;
+  transition: transform 0.3s ease;
+}
+
+.promo-image:hover {
+  transform: scale(1.05);
+}
+
+/* Alternative approach using background-image if needed */
+.promo-card-bg {
+  min-width: 280px;
+  height: 160px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 </style>

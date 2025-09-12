@@ -1,27 +1,6 @@
 <template>
-  <div class="mobile-banking-dashboard">
-    <!-- Header -->
-    <b-navbar variant="light" class="border-bottom">
-        <b-navbar-brand>
-            <div class="d-flex align-items-center">
-            <div class="logo-circle bg-danger rounded-circle d-flex align-items-center justify-content-center">
-                <span class="text-white font-weight-bold">S</span>
-            </div>
-            <span class="ms-2 font-weight-bold">SIMS PPOB</span>
-            </div>
-        </b-navbar-brand>
-        
-        <b-navbar-nav class="ms-auto">
-            <b-nav-item @click="$router.push('/topUp')">Top Up</b-nav-item>
-            <b-nav-item @click="$router.push('/transaction')">Transaction</b-nav-item>
-            <b-nav-item @click="$router.push('/profile')">Akun</b-nav-item>
-        </b-navbar-nav>
-    </b-navbar>
-
-
-    <!-- Main Content -->
+  <layout>
     <b-container fluid class="p-4">
-      <!-- Profile and Balance Section -->
       <b-row class="mb-4">
         <b-col cols="6">
           <div class="d-flex align-items-center">
@@ -51,47 +30,50 @@
         </b-col>
       </b-row>
 
-      <!-- Services Grid -->
       <b-row class="mb-4">
         <div>
             <h6>Semua Transaksi</h6>
             <b-list-group>
-                <b-list-group-item
-                    v-for="(transaction, index) in transactions"
-                    :key="index"
-                    class="d-flex justify-content-between align-items-center mb-3"
-                >
-                    <div class>
+              <b-list-group-item
+                  v-for="(transaction, index) in transactions"
+                  :key="index"
+                  class="d-flex justify-content-between align-items-center mb-3"
+              >
+                  <div>
                     <div :class="transaction.transaction_type == 'TOPUP' ? 'text-success' : 'text-danger'">
                         {{ transaction.transaction_type  == 'TOPUP' ? '+' : '–' }} {{ formatCurrency(transaction.total_amount) }}
                     </div>
                     <small class="text-muted">{{ transaction.created_on }}</small>
-                    </div>
-                    <div class="text-muted">{{ transaction.description }}</div>
-                </b-list-group-item>
-                </b-list-group>
+                  </div>
+                  <div class="text-muted">{{ transaction.description }}</div>
+              </b-list-group-item>
+            </b-list-group>
 
-                <div class="text-center mt-3">
-                <b-button
-                    variant="link"
-                    class="text-danger"
-                    @click="loadMore"
-                    :disabled="loading || noData"
-                >
-                    {{ loading ? 'Loading...' : noData ? 'No More Data' : 'Show more'  }}
-                </b-button>
-                </div>
-            <p v-if="message" class="text-success mt-2" style="cursor: pointer;" @click="$router.push('/')">{{ message }},kembali ke branda</p>
+            <div class="text-center mt-3">
+              <b-button
+                  variant="link"
+                  class="text-danger"
+                  @click="loadMore"
+                  :disabled="loading || noData"
+              >
+                  {{ loading ? 'Loading...' : noData ? 'No More Data' : 'Show more'  }}
+              </b-button>
+            </div>
+            <p v-if="message" class="text-success mt-2" style="cursor: pointer;" @click="$router.push('/')">{{ message }}, klik disini untuk kembali ke branda</p>
         </div>
       </b-row>
     </b-container>
-  </div>
+  </layout>
 </template>
 
 <script>
 import axios from 'axios'
+import Layout from '../layout/Layout.vue';
 export default {
   name: 'Transaction',
+  components: {
+    Layout,
+  },
   data() {
     return {
       baseapi: localStorage.getItem("baseapi"),
@@ -117,7 +99,6 @@ export default {
       return `Rp ${formatted}`;
     },
     async getTransaction() {
-        console.log('test')
         this.loading = true
         this.errorMsg = ''
         try {
@@ -158,7 +139,14 @@ export default {
             this.balance = balance.data.data.balance
         } catch (err) {
             console.error('Error loading dashboard data', err)
+            if (err.response?.data?.message == 'Token tidak tidak valid atau kadaluwarsa') {
+              this.logOut()
+            }
         }
+    },
+    logOut(){
+      localStorage.removeItem('token')
+      this.$router.replace('/login')
     }
   },
   async created() {
@@ -170,11 +158,6 @@ export default {
 </script>
 
 <style scoped>
-.logo-circle {
-  width: 32px;
-  height: 32px;
-}
-
 .balance-card {
   min-width: 280px;
 }

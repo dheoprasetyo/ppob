@@ -1,65 +1,50 @@
 <template>
-  <div class="mobile-banking-dashboard">
-    <!-- Header -->
-    <b-navbar variant="light" class="border-bottom">
-        <b-navbar-brand>
-            <div class="d-flex align-items-center">
-            <div class="logo-circle bg-danger rounded-circle d-flex align-items-center justify-content-center">
-                <span class="text-white font-weight-bold">S</span>
-            </div>
-            <span class="ms-2 font-weight-bold">SIMS PPOB</span>
-            </div>
-        </b-navbar-brand>
-        
-        <b-navbar-nav class="ms-auto">
-            <b-nav-item @click="$router.push('/topUp')">Top Up</b-nav-item>
-            <b-nav-item @click="$router.push('/transaction')">Transaction</b-nav-item>
-            <b-nav-item @click="$router.push('/profile')">Akun</b-nav-item>
-        </b-navbar-nav>
-    </b-navbar>
-
-
-    <!-- Main Content -->
+  <layout>
     <b-container fluid class="p-4">
       <div class="d-flex flex-column" style="max-width: 400px; margin: auto;">
-        <!-- Profile Picture with Edit Icon -->
-        <div class="position-relative mb-3" style = 'text-align:center'>
-        <b-img
-            src="https://www.w3schools.com/howto/img_avatar.png"
-            rounded="circle"
-            width="120"
-            height="120"
-            alt="Profile Picture"
-        ></b-img>
-        <b-button
-            size="sm"
-            variant="light"
-            class="position-absolute"
-            style="bottom: 5px; right: 5px; border-radius: 50%;"
-        >
-            <b-icon icon="pencil"></b-icon>
-        </b-button>
+        <div class="position-relative mb-3" style ='text-align:center'>
+            <b-img
+                :src="profile.profile_image"
+                rounded="circle"
+                width="120"
+                height="120"
+                alt="Profile Picture"
+            ></b-img>
+            <b-button
+                size="sm"
+                variant="light"
+                class="position-absolute"
+                style="bottom: 5px; right: 5px; border-radius: 50%;"
+                @click="clickInputFile()"
+            >
+                <b-icon icon="pencil"></b-icon>
+            </b-button>
+            <input
+                type="file"
+                ref="inputFile"
+                accept="image/*"
+                style="display: none"
+                @change="inputFile"
+            />
         </div>
 
-        <!-- Name -->
-        <h5 class="mb-4 font-weight-bold" style = 'text-align:center'>Kristanto Wibowo</h5>
+       
+        <h5 class="mb-4 font-weight-bold" style = 'text-align:center'>{{profile.first_name + ' '+ profile.last_name}}</h5>
 
-        <!-- Form Fields -->
         <b-form>
-        <!-- Email -->
         <b-form-group label="Email" label-for="email-input" label-cols-sm="4" label-align-sm="right" class="mb-3">
             <b-input-group  prepend="@">
             
             <b-form-input
                 id="email-input"
-                v-model="email"
+                v-model="profile.email"
                 type="email"
                 placeholder="Enter email"
+                readonly
             ></b-form-input>
             </b-input-group>
         </b-form-group>
 
-        <!-- Nama Depan -->
         <b-form-group label="Nama Depan" label-for="first-name-input" label-cols-sm="4" label-align-sm="right" class="mb-3">
             <b-input-group>
             <b-input-group-prepend is-text>
@@ -67,13 +52,12 @@
             </b-input-group-prepend>
             <b-form-input
                 id="first-name-input"
-                v-model="firstName"
+                v-model="profile.first_name"
                 placeholder="Enter first name"
             ></b-form-input>
             </b-input-group>
         </b-form-group>
 
-        <!-- Nama Belakang -->
         <b-form-group label="Nama Belakang" label-for="last-name-input" label-cols-sm="4" label-align-sm="right" class="mb-3">
             <b-input-group>
             <b-input-group-prepend is-text>
@@ -81,49 +65,125 @@
             </b-input-group-prepend>
             <b-form-input
                 id="last-name-input"
-                v-model="lastName"
+                v-model="profile.last_name"
                 placeholder="Enter last name"
             ></b-form-input>
             </b-input-group>
         </b-form-group>
 
-        <!-- Buttons -->
-        <b-button block variant="danger" class="mb-2" @click="editProfile">
+         <div class="row">
+            <b-button variant="danger" class="mb-2" @click="updateProfile">
             Edit Profil
-        </b-button>
-        <b-button block variant="outline-danger" @click="logout">
-            Logout
-        </b-button>
+            </b-button>
+         </div>
+         <div class="row">
+            <b-button block variant="outline-danger" @click="logOut">
+                Logout
+            </b-button>
+         </div>
+         <p v-if="message" :class="jenis" style="cursor: pointer;" @click="$router.push('/')">{{ message }}, klik disini untuk kembali ke branda</p>
+        
+        
         </b-form>
     </div>
     </b-container>
-  </div>
+  </layout>
 </template>
 
 <script>
 import axios from 'axios'
+import Layout from '../layout/Layout.vue';
 export default {
-  name: 'MobileBankingDashboard',
+  name: 'Profile',
+  components: {
+    Layout,
+  },
   data() {
     return {
       baseapi: localStorage.getItem("baseapi"),
       token: localStorage.getItem("token"),
-      profile: [],
+      profile: JSON.parse(localStorage.getItem("profile")),
       loading: false,
-      message: ''
-      
+      message: '',
+      jenis: ''
     }
   },
   methods: {
+    async updateProfile () {
+      this.loading = true
+      this.message = ''
+      this.jenis = ''
+      try {
+        const res = await axios.put(this.baseapi+'/profile/update', {
+          first_name: this.profile.first_name,
+          last_name: this.profile.last_name,
+        },
+        {
+            headers: {
+                Authorization: `Bearer ${this.token}`
+            }
+        })
+        this.profile = res.data.data;
+        localStorage.setItem('profile', JSON.stringify(this.profile))
+        this.message = res.data.message;
+        this.jenis = 'text-success mt-2'
+      } catch (err) {
+        this.message = err.response?.data?.message
+        this.jenis = 'text-danger mt-2'
+      } finally {
+        this.loading = false
+      }
+    },
+    clickInputFile() {
+      this.$refs.inputFile.click();
+    },
+    async inputFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const maxSize = 100 * 1024; 
+        if (file.size > maxSize) {
+            alert('File melebihi 100 KB');
+            event.target.value = '';
+            return;
+        }
+
+        this.profile.profile_image = URL.createObjectURL(file);
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await axios.put(this.baseapi+'/profile/image', formData, {
+            headers: {
+                Authorization: `Bearer ${this.token}`,
+                'Content-Type': 'multipart/form-data', // important for FormData
+            },
+            });
+
+            const data = res.data.data;
+            localStorage.setItem('profile', JSON.stringify(data))
+            this.profile.profile_image = data.profile_image;
+            this.message = res.data.message;
+            this.jenis = 'text-success mt-2'
+
+        } catch (err) {
+            console.error(err);
+            alert('Failed to upload image');
+            this.message = err.response?.data?.message
+            this.jenis = 'text-danger mt-2'
+            this.profile.profile_image = this.profile.profile_image;
+            if (err.response?.data?.message == 'Token tidak tidak valid atau kadaluwarsa') {
+                this.logOut()
+            }
+
+        }
+    },
+
+    logOut(){
+      localStorage.removeItem('token')
+      this.$router.replace('/login')
+    }
   },
 }
 </script>
-
-<style scoped>
-.logo-circle {
-  width: 32px;
-  height: 32px;
-}
-
-
-</style>
