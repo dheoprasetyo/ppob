@@ -64,7 +64,6 @@
             >
                 {{ loading ? 'Loading...' : 'Top Up' }}
             </button>
-            <p v-if="message" class="text-success mt-2" style="cursor: pointer;" @click="$router.push('/')">{{ message }}, klik disini untuk kembali ke branda</p>
         </div>
       </b-row>
     </b-container>
@@ -74,6 +73,7 @@
 <script>
 import axios from 'axios'
 import Layout from '../layout/Layout.vue';
+import Swal from 'sweetalert2'
 export default {
   name: 'TopUp',
   components: {
@@ -90,7 +90,6 @@ export default {
       amounts: [10000, 20000, 50000, 100000, 250000, 500000],
       selectedAmount: null,
       loading: false,
-      message: ''
       
     }
   },
@@ -106,26 +105,60 @@ export default {
         this.nominal = value
     },
     async topUp() {
-        console.log('test')
-        this.loading = true
-        this.errorMsg = ''
+      const result = await Swal.fire({
+        title: `Pembayaran TopUP sebesar`,
+        text: this.formatCurrency(`${this.nominal}`),
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Ya, Lanjutkan"
+      });
+
+      if (result.isConfirmed) {
+        this.loading = true;
+        this.errorMsg = '';
         try {
-            const res = await axios.post(this.baseapi+'/topup', {
-                top_up_amount: this.nominal,
-            },
+          const res = await axios.post(
+            this.baseapi + '/topup',
+            { top_up_amount: this.nominal, },
             {
-                headers: {
-                    Authorization: `Bearer ${this.token}`
-                }
-            })
-            this.message = res.data.message;
-            this.balance = res.data.data.balance
-            this.nominal = 0
+              headers: {
+                Authorization: `Bearer ${this.token}`
+              }
+            }
+          );
+          this.balance = res.data.data.balance
+          this.nominal = 0
+          await Swal.fire({
+            title: `${res.data.message}`,
+            icon: "success",
+            confirmButtonText: 'Kembali ke beranda',
+            showCancelButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+          }).then((result) => {
+            if (result.isConfirmed) {
+              this.$router.push('/');
+            }
+          });
         } catch (err) {
-            this.errorMsg = err.response?.data?.message || 'Top Up gagal'
+          await Swal.fire({
+            title: `${err.response?.data?.message}`,
+            icon: "error",
+            confirmButtonText: 'Kembali ke beranda',
+            showCancelButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+          }).then((result) => {
+            if (result.isConfirmed) {
+              this.$router.push('/');
+            }
+          });
         } finally {
-            this.loading = false
+          this.loading = false;
         }
+      }
     },
     logOut(){
       localStorage.removeItem('token')
@@ -153,7 +186,6 @@ export default {
       this.profile = profile.data.data
       this.balance = balance.data.data.balance
     } catch (err) {
-      console.error('Error loading dashboard data', err)
       if (err.response?.data?.message == 'Token tidak tidak valid atau kadaluwarsa') {
         this.logOut()
       }

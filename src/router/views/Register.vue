@@ -37,8 +37,6 @@
                 </b-button>
             </form>
 
-            <p v-if="message" :class="jenis">{{ message }}</p>
-
             <div class="foot muted">
             Sudah punya akun ?
             <span class="signup" @click="$router.push('/login')" >Login</span>
@@ -55,6 +53,7 @@
 
 <script>
 import axios from 'axios'
+import Swal from 'sweetalert2'
 export default {
   name: 'Register',
   data() {
@@ -67,8 +66,6 @@ export default {
             last_name: ''
         },
         loading: false,
-        message: '',
-        jenis: '',
         baseapi: localStorage.getItem("baseapi"),
     }
   },
@@ -84,12 +81,20 @@ export default {
           first_name: this.form.first_name,
           last_name: this.form.last_name
         })
-        this.message = res.data.message;
         this.form = []
-        this.jenis = 'text-success mt-2'
+        Swal.fire({
+            icon: 'success',
+            title: res.data.message,
+            showConfirmButton: false,
+            timer: 1500
+        })
       } catch (err) {
-        this.message = err.response?.data?.message
-        this.jenis = 'text-danger mt-2'
+        Swal.fire({
+          icon: 'error',
+          title: err.response?.data?.message,
+          showConfirmButton: false,
+          timer: 1500
+        })
       } finally {
         this.loading = false
       }
@@ -104,7 +109,6 @@ export default {
 </script>
 
 <style>
-    <style>
     :root{
       --bg:#f6f7fb;
       --card:#ffffff;

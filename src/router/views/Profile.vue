@@ -81,7 +81,6 @@
                 Logout
             </b-button>
          </div>
-         <p v-if="message" :class="jenis" style="cursor: pointer;" @click="$router.push('/')">{{ message }}, klik disini untuk kembali ke branda</p>
         
         
         </b-form>
@@ -93,6 +92,7 @@
 <script>
 import axios from 'axios'
 import Layout from '../layout/Layout.vue';
+import Swal from 'sweetalert2'
 export default {
   name: 'Profile',
   components: {
@@ -104,8 +104,6 @@ export default {
       token: localStorage.getItem("token"),
       profile: JSON.parse(localStorage.getItem("profile")),
       loading: false,
-      message: '',
-      jenis: ''
     }
   },
   methods: {
@@ -125,11 +123,31 @@ export default {
         })
         this.profile = res.data.data;
         localStorage.setItem('profile', JSON.stringify(this.profile))
-        this.message = res.data.message;
-        this.jenis = 'text-success mt-2'
+        Swal.fire({
+            title: `${res.data.message}`,
+            icon: "success",
+            confirmButtonText: 'Kembali ke beranda',
+            showCancelButton: false,
+            allowOutsideClick: true,
+            allowEscapeKey: true,
+        }).then((result) => {
+            if (result.isConfirmed) {
+            this.$router.push('/');
+            }
+        });
       } catch (err) {
-        this.message = err.response?.data?.message
-        this.jenis = 'text-danger mt-2'
+        Swal.fire({
+            title: `${err.response?.data?.message}`,
+            icon: "error",
+            confirmButtonText: 'Kembali ke beranda',
+            showCancelButton: false,
+            allowOutsideClick: true,
+            allowEscapeKey: true,
+        }).then((result) => {
+            if (result.isConfirmed) {
+            this.$router.push('/');
+            }
+        });
       } finally {
         this.loading = false
       }
@@ -164,14 +182,32 @@ export default {
             const data = res.data.data;
             localStorage.setItem('profile', JSON.stringify(data))
             this.profile.profile_image = data.profile_image;
-            this.message = res.data.message;
-            this.jenis = 'text-success mt-2'
+            Swal.fire({
+                title: `${res.data.message}`,
+                icon: "success",
+                confirmButtonText: 'Kembali ke beranda',
+                showCancelButton: false,
+                allowOutsideClick: true,
+                allowEscapeKey: true,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                this.$router.push('/');
+                }
+            });
 
         } catch (err) {
-            console.error(err);
-            alert('Failed to upload image');
-            this.message = err.response?.data?.message
-            this.jenis = 'text-danger mt-2'
+            Swal.fire({
+                title: `${err.response?.data?.message}`,
+                icon: "error",
+                confirmButtonText: 'Kembali ke beranda',
+                showCancelButton: false,
+                allowOutsideClick: true,
+                allowEscapeKey: true,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                this.$router.push('/');
+                }
+            });
             this.profile.profile_image = this.profile.profile_image;
             if (err.response?.data?.message == 'Token tidak tidak valid atau kadaluwarsa') {
                 this.logOut()

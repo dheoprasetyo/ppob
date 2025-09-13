@@ -55,7 +55,6 @@
             >
                 {{ loading ? 'Loading...' : 'Bayar' }}
             </button>
-            <p v-if="message" class="text-success mt-2" style="cursor: pointer;" @click="$router.push('/')">{{ message }}, klik disini untuk kembali ke branda</p>
         </div>
       </b-row>
     </b-container>
@@ -65,6 +64,7 @@
 <script>
 import axios from 'axios'
 import Layout from '../layout/Layout.vue';
+import Swal from 'sweetalert2'
 export default {
   name: 'Pembayaran',
   props:['id', 'name', 'tagihan'],
@@ -81,8 +81,6 @@ export default {
       amounts: [10000, 20000, 50000, 100000, 250000, 500000],
       selectedAmount: null,
       loading: false,
-      message: ''
-      
     }
   },
   methods: {
@@ -94,27 +92,64 @@ export default {
       return `Rp ${formatted}`;
     },
     async transaction() {
-        console.log('test')
-        this.loading = true
-        this.errorMsg = ''
+      const result = await Swal.fire({
+        title: `Pembayaran ${this.name} sebesar`,
+        text: this.formatCurrency(`${this.tagihan}`),
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Ya, Lanjutkan"
+      });
+
+      if (result.isConfirmed) {
+        this.loading = true;
+        this.errorMsg = '';
         try {
-            const res = await axios.post(this.baseapi+'/transaction', {
-                service_code: this.id,
-            },
+          const res = await axios.post(
+            this.baseapi + '/transaction',
+            { service_code: this.id },
             {
-                headers: {
-                    Authorization: `Bearer ${this.token}`
-                }
-            })
-            this.message = res.data.message;
-            this.balance = res.data.data.balance
-            this.loadDashboardData()
+              headers: {
+                Authorization: `Bearer ${this.token}`
+              }
+            }
+          );
+          this.balance = res.data.data.balance;
+          this.loadDashboardData();
+          await Swal.fire({
+            title: `${res.data.message}`,
+            text: this.formatCurrency(`${this.tagihan}`),
+            icon: "success",
+            confirmButtonText: 'Kembali ke beranda',
+            showCancelButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+          }).then((result) => {
+            if (result.isConfirmed) {
+              this.$router.push('/');
+            }
+          });
         } catch (err) {
-            this.message = err.response?.data?.message || 'Pemabayaran gagal'
+          await Swal.fire({
+            title: `${err.response?.data?.message}`,
+            text: this.formatCurrency(`${this.tagihan}`),
+            icon: "error",
+            confirmButtonText: 'Kembali ke beranda',
+            showCancelButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+          }).then((result) => {
+            if (result.isConfirmed) {
+              this.$router.push('/');
+            }
+          });
         } finally {
-            this.loading = false
+          this.loading = false;
         }
+      }
     },
+
     async loadDashboardData() {
         try {
             const [profile, balance] = await Promise.all([

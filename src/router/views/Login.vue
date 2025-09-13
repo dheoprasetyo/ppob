@@ -25,15 +25,12 @@
                   </b-button>
               </form>
 
-              <p v-if="errorMsg" class="text-danger mt-2">{{ errorMsg }}</p>
-
               <div class="foot">
               Tidak ada akun?
               <span class="signup"  @click="$router.push('/register')">Sign Up</span>
               </div>
           </div>
 
-          <!-- right image -->
           <div class="right" aria-hidden="true">
             <img alt="Vue logo" src="../../assets/imageLogin.png">
           </div>
@@ -44,6 +41,7 @@
 
 <script>
 import axios from 'axios'
+import Swal from 'sweetalert2'
 export default {
   name: 'Login',
   data() {
@@ -55,9 +53,7 @@ export default {
     }
   },
   methods: {
-
     async submit () {
-    // console.log('test')
       this.loading = true
       this.errorMsg = ''
       try {
@@ -65,11 +61,15 @@ export default {
           email: this.form.email,
           password: this.form.password
         })
-        // assuming API returns { token, user }
         localStorage.setItem('token', res.data.data.token)
         this.$router.push('/')
       } catch (err) {
-        this.errorMsg = err.response?.data?.message || 'Login gagal'
+        Swal.fire({
+          icon: 'error',
+          title: err.response?.data?.message,
+          showConfirmButton: false,
+          timer: 1500
+        })
       } finally {
         this.loading = false
       }
@@ -84,7 +84,7 @@ export default {
       --card:#ffffff;
       --text:#2b2b2b;
       --muted:#6b7280;
-      --primary:red;        /* golden button color */
+      --primary:red;      
       --primary-pressed:red;
       --ring:#e5e7eb;
     }
@@ -95,14 +95,13 @@ export default {
       margin:0 auto;
       padding:0 16px;
 
-      /* make the page tall and center the card within */
       min-height:100vh;
-      display:flex;            /* column layout so margin:auto can center */
+      display:flex;           
       flex-direction:column;
     }
 
     .card{
-      margin:auto;             /* centers horizontally & vertically inside .wrap */
+      margin:auto;             
     }
     
     h1{font-weight:700;text-align:center;margin:18px 0 26px}
@@ -119,13 +118,12 @@ export default {
     .right img {
       width: 100%;
       height: 100%;
-      object-fit: cover; /* fills div, crops if needed to maintain aspect ratio */
+      object-fit: cover;
     }
     
     .left{padding:42px 46px;display:flex;flex-direction:column;justify-content:center}
     .title-row{display:flex;flex-direction:column;align-items:flex-start;margin-bottom:28px}
     
-    /* Logo section styles */
     .logo-section{
       display:flex;
       align-items:center;

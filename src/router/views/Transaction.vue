@@ -43,7 +43,7 @@
                     <div :class="transaction.transaction_type == 'TOPUP' ? 'text-success' : 'text-danger'">
                         {{ transaction.transaction_type  == 'TOPUP' ? '+' : '–' }} {{ formatCurrency(transaction.total_amount) }}
                     </div>
-                    <small class="text-muted">{{ transaction.created_on }}</small>
+                    <small class="text-muted">{{ formattedDate(transaction.created_on) }}</small>
                   </div>
                   <div class="text-muted">{{ transaction.description }}</div>
               </b-list-group-item>
@@ -59,7 +59,6 @@
                   {{ loading ? 'Loading...' : noData ? 'No More Data' : 'Show more'  }}
               </b-button>
             </div>
-            <p v-if="message" class="text-success mt-2" style="cursor: pointer;" @click="$router.push('/')">{{ message }}, klik disini untuk kembali ke branda</p>
         </div>
       </b-row>
     </b-container>
@@ -69,6 +68,7 @@
 <script>
 import axios from 'axios'
 import Layout from '../layout/Layout.vue';
+import Swal from 'sweetalert2'
 export default {
   name: 'Transaction',
   components: {
@@ -114,7 +114,12 @@ export default {
             this.transactions = this.transactions.concat(data);
             this.offset += this.limit;
         } catch (err) {
-            this.message = err.response?.data?.message || 'Error loading more data'
+            Swal.fire({
+              icon: 'error',
+              title: err.response?.data?.message,
+              showConfirmButton: false,
+              timer: 1500
+            })
         } finally {
             this.loading = false
         }
@@ -144,6 +149,19 @@ export default {
             }
         }
     },
+    formattedDate(value) {
+      const date = new Date(value);
+      // Format options example: "September 13, 2025, 02:19 AM"
+      return date.toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      });
+    },
     logOut(){
       localStorage.removeItem('token')
       this.$router.replace('/login')
@@ -152,8 +170,7 @@ export default {
   async created() {
     await this.loadDashboardData()
     await this.getTransaction()
-  }
-
+  },
 }
 </script>
 
