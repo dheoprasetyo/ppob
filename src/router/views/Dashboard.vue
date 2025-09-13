@@ -4,7 +4,7 @@
       <b-row class="mb-4">
         <b-col cols="6">
           <div class="d-flex align-items-center">
-            <b-avatar :src="profile.profile_image" size="60px" class="mr-3"></b-avatar>
+            <b-avatar :src="photoProfile" size="60px" class="mr-3"></b-avatar>
             <div>
               <p class="text-muted mb-1">Selamat datang,</p>
               <h4 class="font-weight-bold">{{ profile.first_name }} {{ profile.last_name }}</h4>
@@ -100,11 +100,20 @@ export default {
       this.$router.replace('/login')
     },
   },
+  computed: {
+    photoProfile() {
+      const img = this.profile.profile_image;
+      const invalidUrl = "https://minio.nutech-integrasi.com/take-home-test/null";
+      if (img !== invalidUrl) {
+        return img;
+      }
+      return require('@/assets/profile.png');
+    }
+  },
   async created () {
     const token = localStorage.getItem('token')
 
     try {
-      // run 3 GET requests in parallel
       const [profile, balance, services, banner] = await Promise.all([
         axios.get(this.baseapi+'/profile', {
           headers: { Authorization: `Bearer ${token}` }
@@ -127,8 +136,6 @@ export default {
       this.banner = banner.data.data
       
     } catch (err) {
-      console.error('Error loading dashboard data', err)
-      this.message = err.response?.data?.message
       if (err.response?.data?.message == 'Token tidak tidak valid atau kadaluwarsa') {
         this.logOut()
       }
@@ -156,12 +163,11 @@ export default {
 .promo-scroll {
   overflow-x: auto;
   gap: 15px;
-  /* padding-bottom: 10px; */
 }
 
 .promo-card {
   min-width: 280px;
-  height: 160px; /* Fixed height for consistency */
+  height: 160px;
   flex-shrink: 0;
   border-radius: 8px;
   overflow: hidden;
@@ -178,8 +184,8 @@ export default {
 .promo-image {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* This ensures the image covers the entire container */
-  object-position: center; /* Centers the image */
+  object-fit: cover;
+  object-position: center;
   display: block;
   border-radius: 8px;
   transition: transform 0.3s ease;
@@ -189,7 +195,6 @@ export default {
   transform: scale(1.05);
 }
 
-/* Alternative approach using background-image if needed */
 .promo-card-bg {
   min-width: 280px;
   height: 160px;

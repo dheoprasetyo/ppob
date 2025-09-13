@@ -5,7 +5,7 @@
       <b-row class="mb-4">
         <b-col cols="6">
           <div class="d-flex align-items-center">
-            <b-avatar :src="profile.profile_image" size="60px" class="mr-3"></b-avatar>
+            <b-avatar :src="photoProfile" size="60px" class="mr-3"></b-avatar>
             <div>
               <p class="text-muted mb-1">Selamat datang,</p>
               <h4 class="font-weight-bold">{{ profile.first_name }} {{ profile.last_name }}</h4>
@@ -149,7 +149,6 @@ export default {
         }
       }
     },
-
     async loadDashboardData() {
         try {
             const [profile, balance] = await Promise.all([
@@ -164,7 +163,6 @@ export default {
             this.profile = profile.data.data
             this.balance = balance.data.data.balance
         } catch (err) {
-            console.error('Error loading dashboard data', err)
             if (err.response?.data?.message == 'Token tidak tidak valid atau kadaluwarsa') {
               this.logOut()
             }
@@ -174,6 +172,16 @@ export default {
       localStorage.removeItem('token')
       this.$router.replace('/login')
     },
+  },
+  computed: {
+    photoProfile() {
+      const img = this.profile.profile_image;
+      const invalidUrl = "https://minio.nutech-integrasi.com/take-home-test/null";
+      if (img !== invalidUrl) {
+        return img;
+      }
+      return require('@/assets/profile.png');
+    }
   },
   async created() {
     await this.loadDashboardData()

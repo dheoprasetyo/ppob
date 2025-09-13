@@ -4,7 +4,7 @@
       <div class="d-flex flex-column" style="max-width: 400px; margin: auto;">
         <div class="position-relative mb-3" style ='text-align:center'>
             <b-img
-                :src="profile.profile_image"
+                :src="photoProfile"
                 rounded="circle"
                 width="120"
                 height="120"
@@ -161,9 +161,13 @@ export default {
 
         const maxSize = 100 * 1024; 
         if (file.size > maxSize) {
-            alert('File melebihi 100 KB');
-            event.target.value = '';
-            return;
+            Swal.fire({
+                icon: 'error',
+                title: 'File Melebihi 100 KB',
+                showConfirmButton: false,
+                timer: 1500
+            })
+            return
         }
 
         this.profile.profile_image = URL.createObjectURL(file);
@@ -175,7 +179,7 @@ export default {
             const res = await axios.put(this.baseapi+'/profile/image', formData, {
             headers: {
                 Authorization: `Bearer ${this.token}`,
-                'Content-Type': 'multipart/form-data', // important for FormData
+                'Content-Type': 'multipart/form-data',
             },
             });
 
@@ -221,5 +225,15 @@ export default {
       this.$router.replace('/login')
     }
   },
+  computed: {
+    photoProfile() {
+      const img = this.profile.profile_image;
+      const invalidUrl = "https://minio.nutech-integrasi.com/take-home-test/null";
+      if (img !== invalidUrl) {
+        return img;
+      }
+      return require('@/assets/profile.png');
+    }
+  }
 }
 </script>

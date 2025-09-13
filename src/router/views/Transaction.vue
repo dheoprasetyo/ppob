@@ -4,7 +4,7 @@
       <b-row class="mb-4">
         <b-col cols="6">
           <div class="d-flex align-items-center">
-            <b-avatar :src="profile.profile_image" size="60px" class="mr-3"></b-avatar>
+            <b-avatar :src="photoProfile" size="60px" class="mr-3"></b-avatar>
             <div>
               <p class="text-muted mb-1">Selamat datang,</p>
               <h4 class="font-weight-bold">{{ profile.first_name }} {{ profile.last_name }}</h4>
@@ -82,10 +82,9 @@ export default {
       balance: 0,
       showBalance: false,
       loading: false,
-      message: '',
       transactions: [],
       offset: 0,
-      limit: 3,
+      limit: 5,
       noData: false
       
     }
@@ -171,6 +170,16 @@ export default {
     await this.loadDashboardData()
     await this.getTransaction()
   },
+  computed: {
+    photoProfile() {
+      const img = this.profile.profile_image;
+      const invalidUrl = "https://minio.nutech-integrasi.com/take-home-test/null";
+      if (img !== invalidUrl) {
+        return img;
+      }
+      return require('@/assets/profile.png');
+    }
+  }
 }
 </script>
 
